@@ -16,7 +16,7 @@ def generate_launch_description():
     laser_mapping_params = [
         PathJoinSubstitution([
             FindPackageShare('point_lio'),
-            'config', 'mid360.yaml'
+            'config', 'mid360_sv.yaml'
         ]),
         {
             'use_imu_as_input': False,  # Change to True to use IMU as input of Point-LIO
@@ -43,26 +43,26 @@ def generate_launch_description():
     )
 
     # Conditional RViz node launch
-    # rviz_node = Node(
-    #     package='rviz2',
-    #     executable='rviz2',
-    #     name='rviz',
-    #     arguments=['-d', PathJoinSubstitution([
-    #         FindPackageShare('point_lio'),
-    #         'rviz_cfg', 'loam_livox.rviz'
-    #     ])],
-    #     condition=IfCondition(LaunchConfiguration('rviz')),
-    #     prefix='nice'
-    # )
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz',
+        arguments=['-d', PathJoinSubstitution([
+            FindPackageShare('point_lio'),
+            'rviz_cfg', 'loam_livox.rviz'
+        ])],
+        condition=IfCondition(LaunchConfiguration('rviz')),
+        prefix='nice'
+    )
 
     # Assemble the launch description
     ld = LaunchDescription([
         rviz_arg,
         laser_mapping_node,
-        # GroupAction(
-        #     actions=[rviz_node],
-        #     condition=IfCondition(LaunchConfiguration('rviz'))
-        # ),
+        GroupAction(
+            actions=[rviz_node],
+            condition=IfCondition(LaunchConfiguration('rviz'))
+        ),
     ])
 
     return ld
