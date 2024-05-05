@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
   auto pubLaserCloudMap =
       nh->create_publisher<sensor_msgs::msg::PointCloud2>("/Laser_map", 1000);
   auto pubOdomAftMapped = nh->create_publisher<nav_msgs::msg::Odometry>(
-      "/aft_mapped_to_init", 1000);
+      "/Odometry", 1000);
   auto pubPath = nh->create_publisher<nav_msgs::msg::Path>("/path", 1000);
   auto plane_pub = nh->create_publisher<visualization_msgs::msg::Marker>(
       "/planner_normal", 1000);

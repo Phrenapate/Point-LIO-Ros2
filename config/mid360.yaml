@@ -2,7 +2,7 @@
     ros__parameters:
         common:
             lid_topic: "/livox/lidar"
-            imu_topic: "/livox/imu"
+            imu_topic: "/imu/data"
             con_frame: false # true: if you need to combine several LiDAR frames into one
             con_frame_num: 1 # the number of frames combined
             cut_frame: false # true: if you need to cut one LiDAR frame into several subframes
@@ -17,7 +17,7 @@
 
         mapping:
             imu_en: true
-            start_in_aggressive_motion: false # if true, a preknown gravity should be provided in following gravity_init
+            start_in_aggressive_motion: true # if true, a preknown gravity should be provided in following gravity_init
             extrinsic_est_en: false # for aggressive motion, set this variable false
             imu_time_inte: 0.005 # = 1 / frequency of IMU
             satu_acc: 3.0 # the saturation value of IMU's acceleration. not related to the units
