@@ -1,20 +1,24 @@
 // #include <so3_math.h>
-#include "common_lib.h"
-#include "li_initialization.h"
 #include <malloc.h>
-#include <nav_msgs/msg/detail/path__struct.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <nav_msgs/msg/path.hpp>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <sensor_msgs/msg/detail/point_cloud2__struct.hpp>
+#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include "common_lib.h"
+#include "li_initialization.h"
 using namespace std;
 
 #define PUBFRAME_PERIOD (20)
@@ -478,13 +482,14 @@ int main(int argc, char **argv) {
             }
           }
         } else {
-          kf_input.x_.gravity << VEC_FROM_ARRAY(gravity_init);
-          kf_output.x_.gravity << VEC_FROM_ARRAY(gravity_init);
-          kf_output.x_.acc << VEC_FROM_ARRAY(gravity_init);
+          kf_input.x_.gravity << VEC_FROM_ARRAY(gravity); // _init);
+          kf_output.x_.gravity << VEC_FROM_ARRAY(gravity); //_init);
+          kf_output.x_.acc << VEC_FROM_ARRAY(gravity); //_init);
           kf_output.x_.acc *= -1;
           p_imu->imu_need_init_ = false;
           // p_imu->after_imu_init_ = true;
         }
+        G_m_s2 = std::sqrt(gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2]);
       }
 
       double t0, t1, t2, t3, t4, t5, match_start, solve_start;
@@ -493,7 +498,7 @@ int main(int argc, char **argv) {
       propag_time = 0;
       update_time = 0;
       t0 = omp_get_wtime();
-
+      
       /*** downsample the feature points in a scan ***/
       t1 = omp_get_wtime();
       p_imu->Process(Measures, feats_undistort);
@@ -508,15 +513,15 @@ int main(int argc, char **argv) {
              time_list);
       }
       {
-        time_seq = time_compressing<int>(feats_down_body);
-        feats_down_size = feats_down_body->points.size();
+          time_seq = time_compressing<int>(feats_down_body);
+          feats_down_size = feats_down_body->points.size();
       }
-
+    
       if (!p_imu->after_imu_init_) {
         if (!p_imu->imu_need_init_) {
           V3D tmp_gravity;
           if (imu_en) {
-            tmp_gravity = -p_imu->mean_acc / acc_norm * G_m_s2;
+            tmp_gravity = - p_imu->mean_acc / p_imu->mean_acc.norm() * G_m_s2;
           } else {
             tmp_gravity << VEC_FROM_ARRAY(gravity_init);
             p_imu->after_imu_init_ = true;
@@ -528,7 +533,7 @@ int main(int argc, char **argv) {
           kf_output.x_.rot = rot_init;
           // kf_input.x_.rot; //.normalize();
           // kf_output.x_.rot; //.normalize();
-          kf_output.x_.acc = -rot_init.transpose() * kf_output.x_.gravity;
+          kf_output.x_.acc = - rot_init.transpose() * kf_output.x_.gravity;
         } else {
           continue;
         }
@@ -805,7 +810,7 @@ int main(int argc, char **argv) {
                 acc_avr << imu_next.linear_acceleration.x,
                     imu_next.linear_acceleration.y,
                     imu_next.linear_acceleration.z;
-                acc_avr_norm = acc_avr * G_m_s2 / acc_norm;
+                // acc_avr_norm = acc_avr * G_m_s2 / acc_norm;
                 kf_output.update_iterated_dyn_share_IMU();
                 imu_deque.pop_front();
                 if (imu_deque.empty())
